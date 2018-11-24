@@ -19,6 +19,25 @@ case class AlgoFor(productions: List[Production]) {
     }
   }
   def follow(symbol: Symbol): Set[Terminal] = {
-    Set()
+    def helper(symbo: Symbol, searchedList: Set[Symbol]): Set[Terminal] = {
+      if (searchedList.contains(symbo)) Set()
+      else {
+        val result = for {
+          prod: Production <- productions.toSet
+          val index = prod.body.indexOf(symbo)
+          if index != -1
+          i <- if (index == prod.body.size - 1) helper(prod.head, searchedList + symbo)
+          else {
+            val firstSet = first(prod.body(index + 1))
+            if (firstSet.contains(Terminal("")))
+              firstSet - Terminal("") ++ helper(prod.head, searchedList + symbo)
+            else firstSet
+          }
+        } yield i
+        if (symbo == productions.head.head) result + Terminal("$")
+        else result
+      }
+    }
+    helper(symbol, Set())
   }
 }

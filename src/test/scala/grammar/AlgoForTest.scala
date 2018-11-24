@@ -3,7 +3,7 @@ package grammar
 
 class AlgoForTest extends BasicSpec {
   private val productions2 = construct(List(
-    ("S", List("A", "x")),
+    ("S", List("A", "x", "B")),
     ("A", List("a")),
     ("B", List("C", "D")),
     ("C", List("c")),
@@ -12,7 +12,7 @@ class AlgoForTest extends BasicSpec {
     ("D", List("e")),
   ))
 
-  "First(a) in productions2" should "be { a }" in {
+  "First(a) in productions2" should "be {a}" in {
     val algo = AlgoFor(productions2)
     assertResult(Set(Terminal("a"))) {
       algo.first(Terminal("a"))
@@ -32,8 +32,8 @@ class AlgoForTest extends BasicSpec {
       algo.first(NonTerminal("B"))
     }
   }
-  
-  "First(t) of productions" should "be correct" in {
+
+  "First() of productions" should "be correct" in {
     val algo = AlgoFor(productions)
     val result1 = Set(Terminal("("),Terminal("id"))
     val result2 = Set(Terminal("+"), Terminal(""))
@@ -53,6 +53,40 @@ class AlgoForTest extends BasicSpec {
     assertResult(result3) {
       algo.first(NonTerminal("Tp"))
     }
+  }
+
+  "Follow(S) of productions2" should "be {$}" in {
+    val algo = AlgoFor(productions2)
+    assertResult(Set(Terminal("$"))) {
+      algo.follow(NonTerminal("S"))
+    }
+  }
+
+  "Follow(A) of productions2" should "be {x}" in {
+    val algo = AlgoFor(productions2)
+    assertResult(Set(Terminal("x"))) {
+      algo.follow(NonTerminal("A"))
+    }
+  }
+
+  "Follow(B) of productions3" should "be {$}" in {
+    val algo = AlgoFor(productions2)
+    assertResult(Set(Terminal("$"))) {
+      algo.follow(NonTerminal("B"))
+    }
+  }
+
+  "Follow() or productions" should "be correct" in {
+    val algo = AlgoFor(productions)
+    val result1 = Set("+", ")", "$").map(Terminal)
+    val result2 = Set(")", "$").map(Terminal)
+    val result3 = Set("+", "*", ")", "$").map(Terminal)
+
+    assertResult(result1) {algo.follow(NonTerminal("T"))}
+    assertResult(result1) {algo.follow(NonTerminal("Tp"))}
+    assertResult(result2) {algo.follow(NonTerminal("E"))}
+    assertResult(result2) {algo.follow(NonTerminal("Ep"))}
+    assertResult(result3) {algo.follow(NonTerminal("F"))}
   }
 
 }
