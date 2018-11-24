@@ -32,9 +32,8 @@ class AlgoForTest extends BasicSpec {
       algo.first(NonTerminal("B"))
     }
   }
-
-//  "First(t) of productions"
-  ignore should "be correct" in {
+  
+  "First(t) of productions" should "be correct" in {
     val algo = AlgoFor(productions)
     val result1 = Set(Terminal("("),Terminal("id"))
     val result2 = Set(Terminal("+"), Terminal(""))

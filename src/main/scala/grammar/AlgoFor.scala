@@ -6,8 +6,15 @@ case class AlgoFor(productions: List[Production]) {
     symbol match {
       case term: Terminal => Set(term)
       case nonTerm: NonTerminal =>
-        productions.toSet.filter(_.head == nonTerm).flatMap { prod =>
-          first(prod.body.head)
+        val relatedProductions = productions.toSet.filter(_.head == nonTerm)
+        relatedProductions.flatMap { prod =>
+          val index = prod.body.indexWhere(!first(_).contains(Terminal("")))
+          val firstSymbols =
+            if (index == -1) prod.body else prod.body.take(index + 1)
+          val firstSet = firstSymbols.toSet.flatMap(first)
+          if (index != -1)
+            firstSet - Terminal("")
+          else firstSet
         }
     }
   }
