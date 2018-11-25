@@ -1,7 +1,7 @@
 package grammar
 
 object Algorithm {
-  private [grammar] def nullable(syms: Set[Terminal]): Boolean = syms.contains(Terminal(""))
+  private [grammar] def nullable(syms: Set[Symbol]): Boolean = syms.contains(Terminal(""))
 
   def construct(productions: List[(String, List[String])]): List[Production] = {
     val terminals = productions.map(_._1).toSet
@@ -66,5 +66,25 @@ object Algorithm {
       terms.foreach(pt.addProd(prod)(_))
     }
     pt
+  }
+
+  def parse(parsingTable: ParsingTable, symbols: List[Terminal]): Boolean = {
+    val startingSymbol = parsingTable.productions.head.head
+    def helper(nt: List[Symbol], rest: List[Terminal]): Boolean = {
+      if (rest.isEmpty && nt.isEmpty) true
+      else if (rest.isEmpty || nt.isEmpty) false
+      else {
+        nt.head match {
+          case term: Terminal => if (term != rest.head) false else helper(nt.tail, rest.tail)
+          case nonTerm: NonTerminal =>
+            val body = parsingTable.getProd(nonTerm)(rest.head)
+            if (body.isEmpty) false else {
+              if (nullable(body.get.toSet)) helper(nt.tail, rest)  // drop epsilon
+              else helper(body.get ++ nt.tail, rest)
+            }
+        }
+      }
+    }
+    helper(List(startingSymbol), symbols)
   }
 }

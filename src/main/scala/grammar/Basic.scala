@@ -7,7 +7,7 @@ case class NonTerminal(override val str: String) extends Symbol(str)
 
 case class Production(head: NonTerminal, body: List[Symbol])
 
-class ParsingTable(productions: List[Production]) {
+class ParsingTable(val productions: List[Production]) {
   val terms: Set[NonTerminal] = productions.map(_.head).toSet
   val nonTerms: Set[Symbol] = productions.flatMap(_.body).toSet.filter(_.isInstanceOf[NonTerminal])
   private val table: m.Map[NonTerminal, m.Map[Terminal, List[Symbol]]] = m.Map()
