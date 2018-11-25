@@ -10,15 +10,13 @@ case class AlgoFor(productions: List[Production]) {
     case term: Terminal => Set(term)
     case nonTerm: NonTerminal =>
       val relatedProductions = productions.toSet.filter(_.head == nonTerm)
-      relatedProductions.flatMap { prod =>
+      for {
+        prod <- relatedProductions
         val index = prod.body.indexWhere(!first(_).contains(Terminal("")))
-        val firstSymbols =
-          if (index == -1) prod.body else prod.body.take(index + 1)
+        val firstSymbols = if (index == -1) prod.body else prod.body.take(index + 1)
         val firstSet = firstSymbols.flatMap(first).toSet
-        if (index != -1)
-          firstSet - Terminal("")
-        else firstSet
-      }
+        i <- if (index != -1) firstSet - Terminal("") else firstSet
+      } yield i
   }
 
   def first(symbols: List[Symbol]): Set[Terminal] = {
@@ -31,7 +29,7 @@ case class AlgoFor(productions: List[Production]) {
     def helper(symbo: Symbol, searchedList: Set[Symbol]): Set[Terminal] = {
       if (searchedList.contains(symbo)) Set()
       else {
-        val result = (for {
+        val result = for {
           prod <- productions
           val index = prod.body.indexOf(symbo)
           if index != -1
@@ -42,9 +40,9 @@ case class AlgoFor(productions: List[Production]) {
               firstSet - Terminal("") ++ helper(prod.head, searchedList + symbo)
             else firstSet
           }
-        } yield i).toSet
-        if (symbo == productions.head.head) result + Terminal("$")
-        else result
+        } yield i
+        if (symbo == productions.head.head) result.toSet + Terminal("$")
+        else result.toSet
       }
     }
     helper(symbol, Set())

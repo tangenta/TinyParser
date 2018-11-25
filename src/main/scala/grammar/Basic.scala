@@ -24,5 +24,4 @@ class ParsingTable(productions: List[Production]) {
   def getProd(nonTerm: NonTerminal)(term: Terminal): Option[List[Symbol]] = {
     table.get(nonTerm).flatMap(_.get(term))
   }
-
 }
