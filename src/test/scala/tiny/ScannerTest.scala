@@ -1,4 +1,4 @@
-package lexer
+package tiny
 
 import org.scalatest.FlatSpec
 

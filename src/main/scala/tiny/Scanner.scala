@@ -1,4 +1,4 @@
-package lexer
+package tiny
 
 import scala.util.Try
 
@@ -15,12 +15,12 @@ object Scanner {
   private def isAlpha(ch: Char): Boolean = (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')
   private def isDigit(ch: Char): Boolean = ch >= '0' && ch <= '9'
 
-  protected [lexer] def splitIdentifier(str: String): (String, String) = {
+  protected [tiny] def splitIdentifier(str: String): (String, String) = {
     val rest = str.tail
     val result = rest.span(ch => isAlpha(ch) || isDigit(ch) || ch == '_')
     (str.head + result._1, result._2)
   }
-  protected [lexer] def splitNumber(str: String): (String, String) = {
+  protected [tiny] def splitNumber(str: String): (String, String) = {
     val (firstPart, rest) = str.span(isDigit)
     if (rest.isEmpty || rest.head != '.') (firstPart, rest)
     else {
