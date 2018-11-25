@@ -3,6 +3,15 @@ package grammar
 object Algorithm {
   private [grammar] def nullable(syms: Set[Terminal]): Boolean = syms.contains(Terminal(""))
 
+  def construct(productions: List[(String, List[String])]): List[Production] = {
+    val terminals = productions.map(_._1).toSet
+    productions.map(prod =>
+      Production(NonTerminal(prod._1), prod._2.map( str =>
+        if (terminals.contains(str)) NonTerminal(str)
+        else Terminal(str)
+      )))
+  }
+
   def first(productions: List[Production], symbol: Symbol): Set[Terminal] = symbol match {
     case term: Terminal => Set(term)
     case nonTerm: NonTerminal =>
