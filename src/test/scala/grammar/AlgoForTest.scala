@@ -89,4 +89,50 @@ class AlgoForTest extends BasicSpec {
     assertResult(result3) {algo.follow(NonTerminal("F"))}
   }
 
+  "First(AxB) in productions2" should "be {a}" in {
+    val algo = AlgoFor(productions2)
+    assertResult(Set(Terminal("a"))) {
+      algo.first(List(NonTerminal("A"), Terminal("x"), NonTerminal("B")))
+    }
+  }
+  "First(Cd) in productions2" should "be {c, d}" in {
+    val algo = AlgoFor(productions2)
+    assertResult(Set(Terminal("c"), Terminal("d"))) {
+      algo.first(List(NonTerminal("C"), Terminal("d")))
+    }
+  }
+
+ "parsing table of productions2" should "be correct" in {
+    val algo = AlgoFor(productions2)
+    assertResult(List(NonTerminal("A"), Terminal("x"), NonTerminal("B"))) {
+      algo.parsingTable.getProd(NonTerminal("S"))(Terminal("a")).get
+    }
+    assertResult(List(Terminal("a"))) {
+      algo.parsingTable.getProd(NonTerminal("A"))(Terminal("a")).get
+    }
+    assertResult(List(NonTerminal("C"), NonTerminal("D"))) {
+      algo.parsingTable.getProd(NonTerminal("B"))(Terminal("c")).get
+    }
+    assertResult(List(NonTerminal("C"), NonTerminal("D"))) {
+      algo.parsingTable.getProd(NonTerminal("B"))(Terminal("d")).get
+    }
+    assertResult(List(NonTerminal("C"), NonTerminal("D"))) {
+      algo.parsingTable.getProd(NonTerminal("B"))(Terminal("e")).get
+    }
+    assertResult(List(Terminal("c"))) {
+      algo.parsingTable.getProd(NonTerminal("C"))(Terminal("c")).get
+    }
+    assertResult(List(Terminal(""))) {
+      algo.parsingTable.getProd(NonTerminal("C"))(Terminal("d")).get
+    }
+    assertResult(List(Terminal(""))) {
+      algo.parsingTable.getProd(NonTerminal("C"))(Terminal("e")).get
+    }
+    assertResult(List(Terminal("d"))) {
+      algo.parsingTable.getProd(NonTerminal("D"))(Terminal("d")).get
+    }
+    assertResult(List(Terminal("e"))) {
+      algo.parsingTable.getProd(NonTerminal("D"))(Terminal("e")).get
+    }
+  }
 }
