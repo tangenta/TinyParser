@@ -1,5 +1,7 @@
 package tiny
 
+import grammar.{Terminal, Token}
+
 import scala.util.Try
 
 object Scanner {
@@ -15,23 +17,25 @@ object Scanner {
   private def isAlpha(ch: Char): Boolean = (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')
   private def isDigit(ch: Char): Boolean = ch >= '0' && ch <= '9'
 
-  protected [tiny] def splitIdentifier(str: String): (String, String) = {
+  protected [tiny] def splitIdentifier(str: String): (Token, String) = {
     val rest = str.tail
     val result = rest.span(ch => isAlpha(ch) || isDigit(ch) || ch == '_')
-    (str.head + result._1, result._2)
+    val id = str.head + result._1
+    val strType = if (keywords.contains(id)) id else "identifier"
+    (Token(Terminal(strType), id), result._2)
   }
-  protected [tiny] def splitNumber(str: String): (String, String) = {
+
+  protected [tiny] def splitNumber(str: String): (Token, String) = {
     val (firstPart, rest) = str.span(isDigit)
-    if (rest.isEmpty || rest.head != '.') (firstPart, rest)
+    if (rest.isEmpty || rest.head != '.') (Token(Terminal("number"), firstPart), rest)
     else {
       val (secondPart, remain) = rest.tail.span(isDigit)
-      (firstPart + "." + secondPart, remain)
+      (Token(Terminal("number"), firstPart + "." + secondPart), remain)
     }
   }
 
-
-  def split(str: String): Try[List[String]] = {
-    def helper(recognized: List[String], str: String): List[String] = {
+  def split(str: String): Try[List[Token]] = {
+    def helper(recognized: List[Token], str: String): List[Token] = {
       if (str.isEmpty) recognized
       else str.head match {
         case '{' => helper(recognized, str.dropWhile(_ != '}').tail)
@@ -46,9 +50,9 @@ object Scanner {
           val matchedSymbol = symbols.find(_.head == symbol).get
           assert(str.startsWith(matchedSymbol))
           val split = str.splitAt(matchedSymbol.length)
-          helper(split._1 :: recognized, split._2)
+          helper(Token(Terminal(split._1)) :: recognized, split._2)
       }
     }
-    Try(helper(List(), str).reverse)
+    Try((Token(Terminal("$")) :: helper(List(), str)).reverse)
   }
 }

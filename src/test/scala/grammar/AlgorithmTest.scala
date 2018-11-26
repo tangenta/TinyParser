@@ -162,6 +162,13 @@ class AlgorithmTest extends BasicSpec {
     }
   }
 
+  "parsing table for tiny's mul-factor, -" should "be empty" in {
+    assertResult(List(Terminal(""))) {
+      Algorithm.buildParsingTable(tiny.Productions.tinyProductions)
+        .getProd(NonTerminal("mul-factor"))(Terminal("-")).get
+    }
+  }
+
   "parse for productions2" should "be correct" in {
     import Algorithm._
     val parseTable = buildParsingTable(productions2)

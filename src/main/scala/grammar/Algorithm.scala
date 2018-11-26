@@ -1,5 +1,9 @@
 package grammar
 
+import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
+import scala.util.Try
+
 object Algorithm {
   private [grammar] def nullable(syms: Set[Symbol]): Boolean = syms.contains(Terminal(""))
 
@@ -18,9 +22,9 @@ object Algorithm {
       val relatedProductions = productions.toSet.filter(_.head == nonTerm)
       for {
         prod <- relatedProductions
-        val index = prod.body.indexWhere(!first(productions, _).contains(Terminal("")))
-        val firstSymbols = if (index == -1) prod.body else prod.body.take(index + 1)
-        val firstSet = firstSymbols.flatMap(first(productions, _)).toSet
+        index = prod.body.indexWhere(!first(productions, _).contains(Terminal("")))
+        firstSymbols = if (index == -1) prod.body else prod.body.take(index + 1)
+        firstSet = firstSymbols.flatMap(first(productions, _)).toSet
         i <- if (index != -1) firstSet - Terminal("") else firstSet
       } yield i
   }
@@ -37,7 +41,7 @@ object Algorithm {
       else {
         val result = for {
           prod <- productions
-          val index = prod.body.indexOf(symbo)
+          index = prod.body.indexOf(symbo)
           if index != -1
           i <- if (index == prod.body.size - 1) helper(prod.head, searchedList + symbo)
           else {
@@ -87,4 +91,68 @@ object Algorithm {
     }
     helper(List(startingSymbol), symbols)
   }
+
+  def buildParseTree(parsingTable: ParsingTable, tokens: List[Token]): Try[Node] = {
+    case class MNode(nt: NonTerminal, children: ListBuffer[Node]) extends Node
+    case class MLeaf(var token: Token) extends Node
+
+    val startingSymbol = MNode(parsingTable.productions.head.head, ListBuffer())
+
+    def helper(nodes: List[Node], tokens: List[Token]): Boolean = {
+      if (nodes.isEmpty && tokens.nonEmpty && tokens.head.terminal == Terminal("$")) true
+      else nodes.head match {
+        case node: MNode =>
+          val body = parsingTable.getProd(node.nt)(tokens.head.terminal)    // needs error handling
+          if (body.isEmpty) {
+            println(node.nt, "\n", tokens.head.terminal)
+            println(startingSymbol)
+          }
+          val prod = body.get
+          val newNodes = prod.map {
+            case term: Terminal => MLeaf(Token(term))
+            case nonTerm: NonTerminal => MNode(nonTerm, ListBuffer())
+          }
+          newNodes.foreach(node.children += _)
+          helper(newNodes ::: nodes.tail, tokens)
+        case leaf: MLeaf =>
+          if (leaf.token.terminal.str.isEmpty) helper(nodes.tail, tokens)   // drop epsilon
+          else {
+            assert(leaf.token.terminal == tokens.head.terminal, leaf.token.terminal + ", " + tokens.head.terminal)   // needs error handling
+            leaf.token = tokens.head
+            helper(nodes.tail, tokens.tail)
+          }
+      }
+    }
+    assert(helper(List(startingSymbol), tokens))
+    def immutify(node: Node): Node = node match {
+      case mNode: MNode => InnerNode(mNode.nt, mNode.children.map(immutify).toList)
+      case mLeaf: MLeaf => Leaf(mLeaf.token)
+    }
+
+    Try(immutify(startingSymbol))
+  }
+
+  private def isBlank(ch: Char): Boolean = " \t\n".contains(ch)
+
+  def buildStrTree(root: Node, indent: Int): String = {
+    val blank = Array.fill(indent)(' ').mkString("")
+    root match {
+      case leaf: Leaf => val (mType, mValue) = (leaf.token.terminal.str, leaf.token.value)
+        blank + mType + " " + mValue
+      case innerNode: InnerNode =>
+        val childStr = innerNode.children.map(buildStrTree(_, indent + 1)).filter(_.nonEmpty).mkString("\n")
+        if (childStr.exists(!isBlank(_))) blank + innerNode.symbol.str + "\n" + childStr else ""
+    }
+  }
+}
+
+object TestParseTree extends App {
+  val source: String =
+    """
+      |v := u-u/v*v
+    """.stripMargin
+  import Algorithm._
+  print(buildStrTree(buildParseTree(
+    buildParsingTable(tiny.Productions.tinyProductions),
+    tiny.Scanner.split(source).get).get, 0))
 }

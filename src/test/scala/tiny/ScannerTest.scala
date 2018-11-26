@@ -31,8 +31,8 @@ class ScannerTest extends FlatSpec {
     }
   }
 
-  "split" should "work correctly2" in {
-    val source = """
+  val source: String =
+    """
       |read u;
       |read v; { input two integers }
       |if v=0 then v:=0 { do nothing }
@@ -45,6 +45,9 @@ class ScannerTest extends FlatSpec {
       |end;
       |write u{output gcd of original u & v}
     """.stripMargin
+
+  "split" should "work correctly2" in {
+
     val result = List(
       "read", "u", ";", "read", "v", ";", "if", "v", "=", "0", "then",
       "v", ":=", "0", "else", "repeat", "temp", ":=", "v", ";", "v", ":=",
