@@ -6,11 +6,11 @@ import scala.util.Try
 
 object Scanner {
   private val keywords: Set[String] = Set(
-    "if", "then", "end", "else", "repeat", "until",
-    "read", "write",
+    "if", "then", "end", "else", "repeat", "until", "endwhile",
+    "read", "write", "while", "do", "for", "to", "downto", "enddo"
   )
   private val symbols: Set[String] = Set(
-    ";", ":=", "<", "=", "+", "-", "*", "/", "(", ")"
+    ";", ":=", "<", "=", "+", "-", "*", "/", "(", ")", ">"
   )
 
   private def isBlank(ch: Char): Boolean = " \t\n".contains(ch)

@@ -138,16 +138,18 @@ object Algorithm {
 object TestParseTree extends App {
   val source: String =
     """
-      |read x;
-      |if (0 < x)
+      |{ Sample program
+      |  in TINY language -
+      |  computes factorial
+      |}
+      |read x; { input an integer }
+      |if ( x>0 ) { don't compute if x <= 0 }
       |  fact := 1;
-      |  repeat
+      |  while x>0 do
       |    fact := fact * x;
       |    x := x - 1
-      |  until x = 0
-      |else
-      |  fact := 2;
-      |write fact
+      |  endwhile;
+      |  write fact  { output factorial of x }
     """.stripMargin
 //  """
 //    | v := u * u
