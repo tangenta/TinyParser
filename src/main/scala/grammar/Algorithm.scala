@@ -1,6 +1,7 @@
 package grammar
 
-import scala.collection.mutable
+import tiny.Productions
+
 import scala.collection.mutable.ListBuffer
 import scala.util.Try
 
@@ -132,27 +133,26 @@ object Algorithm {
     Try(immutify(startingSymbol))
   }
 
-  private def isBlank(ch: Char): Boolean = " \t\n".contains(ch)
-
-  def buildStrTree(root: Node, indent: Int): String = {
-    val blank = Array.fill(indent)(' ').mkString("")
-    root match {
-      case leaf: Leaf => val (mType, mValue) = (leaf.token.terminal.str, leaf.token.value)
-        blank + mType + " " + mValue
-      case innerNode: InnerNode =>
-        val childStr = innerNode.children.map(buildStrTree(_, indent + 1)).filter(_.nonEmpty).mkString("\n")
-        if (childStr.exists(!isBlank(_))) blank + innerNode.symbol.str + "\n" + childStr else ""
-    }
-  }
 }
 
 object TestParseTree extends App {
   val source: String =
     """
-      |v := u-u/v*v
+      |read x;
+      |if 0 < x then
+      |  fact := 1;
+      |  repeat
+      |    fact := fact * x;
+      |    x := x - 1
+      |  until x = 0
+      |end;
+      |write fact
     """.stripMargin
+//  """
+//    | v := u * u
+//  """.stripMargin
   import Algorithm._
-  print(buildStrTree(buildParseTree(
+  print(Productions.buildString(buildParseTree(
     buildParsingTable(tiny.Productions.tinyProductions),
-    tiny.Scanner.split(source).get).get, 0))
+    tiny.Scanner.split(source).get).get))
 }
