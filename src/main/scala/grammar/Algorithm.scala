@@ -139,13 +139,14 @@ object TestParseTree extends App {
   val source: String =
     """
       |read x;
-      |if 0 < x then
+      |if (0 < x)
       |  fact := 1;
       |  repeat
       |    fact := fact * x;
       |    x := x - 1
       |  until x = 0
-      |end;
+      |else
+      |  fact := 2;
       |write fact
     """.stripMargin
 //  """

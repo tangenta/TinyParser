@@ -14,18 +14,29 @@ object Productions {
     "statement" -> List("assign-stmt"),
     "statement" -> List("read-stmt"),
     "statement" -> List("write-stmt"),
-    "if-stmt" -> List("if", "exp", "then", "stmt-sequence", "else-stmt-sequence", "end"),
+    "statement" -> List("while-stmt"),
+    "statement" -> List("dowhile-stmt"),
+    "statement" -> List("for-stmt"),
+    "if-stmt" -> List("if", "(", "exp", ")", "stmt-sequence", "else-stmt-sequence"),
     "else-stmt-sequence" -> List("else", "stmt-sequence"),
     "else-stmt-sequence" -> List(""),
     "repeat-stmt" -> List("repeat", "stmt-sequence", "until", "exp"),
     "assign-stmt" -> List("identifier", ":=", "exp"),
     "read-stmt" -> List("read", "identifier"),
     "write-stmt" -> List("write", "exp"),
+    "while-stmt" -> List("while", "exp", "do", "stmt-sequence", "endwhile"),
+    "dowhile-stmt" -> List("do", "stmt-sequence", "while", "(", "exp", ")"),
+    "for-stmt" -> List("for", "assign-stmt", "rest-for-stmt"),
+    "rest-for-stmt" -> List("asfor-stmt"),
+    "rest-for-stmt" -> List("defor-stmt"),
+    "asfor-stmt" -> List("to", "simple-exp", "do", "stmt-sequence", "enddo"),
+    "defor-stmt" -> List("downto", "simple-exp", "do", "stmt-sequence", "enddo"),
     "exp" -> List("simple-exp", "comp-simp-exp"),
     "comp-simp-exp" -> List("comparision-op", "simple-exp"),
     "comp-simp-exp" -> List(""),
     "comparision-op" -> List("<"),
     "comparision-op" -> List("="),
+    "comparision-op" -> List(">"),
     "simple-exp" -> List("term", "add-op-term"),
     "add-op-term" -> List("addop", "term", "add-op-term"),
     "add-op-term" -> List(""),
@@ -36,6 +47,7 @@ object Productions {
     "mul-factor" -> List(""),
     "mulop" -> List("*"),
     "mulop" -> List("/"),
+    "mulop" -> List("%"),
     "factor" -> List("(", "exp", ")"),
     "factor" -> List("number"),
     "factor" -> List("identifier"),
@@ -89,15 +101,37 @@ object Productions {
               case "stmt-sequence" => subtree.map(helper(_, indent)).mkString("\n")
               case ";statement" => helper(subtree(1), indent) + "\n" + helper(subtree(2), indent)
               case "if-stmt" => blank + "If\n" +
-                helper(subtree(1), indent + 1) + "\n" +
+                helper(subtree(2), indent + 1) + "\n" +
                 blank + "Then\n" +
-                helper(subtree(3), indent + 1) + "\n" +
                 helper(subtree(4), indent + 1) + "\n" +
+                helper(subtree(5), indent + 1) + "\n" +
                 blank + "End"
               case "else-stmt-sequence" => blank + "Else\n" + helper(subtree(1), indent + 1)
               case "repeat-stmt" => blank + "Repeat\n" +
                 helper(subtree(1), indent + 1) + "\n" +
                 blank + "until\n" + helper(subtree.last, indent + 1)
+              case "while-stmt" => blank + "While\n" +
+                helper(subtree(1), indent + 1) + "\n" +
+                blank + "do\n" +
+                helper(subtree(3), indent + 1) + "\n" +
+                blank + "endwhile"
+              case "dowhile-stmt" => blank + "do\n" +
+                helper(subtree(1), indent + 1) + "\n" +
+                blank + "while\n" +
+                helper(subtree(4), indent + 1) + "\n"
+              case "for-stmt" => blank + "for\n" +
+                helper(subtree(1), indent + 1) + "\n" +
+                helper(subtree(2), indent)
+              case "asfor-stmt" => blank + "to\n" +
+                helper(subtree(1), indent + 1) + "\n" +
+                blank + "do\n" +
+                helper(subtree(3), indent + 1) +
+                blank + "enddo"
+              case "defor-stmt" => blank + "downto\n" +
+                helper(subtree(1), indent + 1) + "\n" +
+                blank + "do\n" +
+                helper(subtree(3), indent + 1) +
+                blank + "enddo"
               case "assign-stmt" => blank + "Assign to: " + helper(subtree.head, 0) + "\n" +
                 helper(subtree.last, indent + 1)
               case "read-stmt" => blank + "Read: " + helper(subtree.last, 0)
