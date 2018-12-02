@@ -51,6 +51,7 @@ object Scanner {
           assert(str.startsWith(matchedSymbol))
           val split = str.splitAt(matchedSymbol.length)
           helper(Token(Terminal(split._1)) :: recognized, split._2)
+        case _ => throw new RuntimeException(s"cannot recognize character: `${str.head}`")
       }
     }
     Try((Token(Terminal("$")) :: helper(List(), str)).reverse)

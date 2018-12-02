@@ -7,6 +7,7 @@ import scala.util.Try
 
 object Algorithm {
   private [grammar] def nullable(syms: Set[Symbol]): Boolean = syms.contains(Terminal(""))
+  private def tr(str: String) = if (str == "$") "EOF" else str
 
   def construct(productions: List[(String, List[String])]): List[Production] = {
     val terminals = productions.map(_._1).toSet
@@ -94,68 +95,32 @@ object Algorithm {
   }
 
   def buildParseTree(parsingTable: ParsingTable, tokens: List[Token]): Try[Node] = {
-    case class MNode(nt: NonTerminal, children: ListBuffer[Node]) extends Node
-    case class MLeaf(var token: Token) extends Node
-
-    val startingSymbol = MNode(parsingTable.productions.head.head, ListBuffer())
-
-    def helper(nodes: List[Node], tokens: List[Token]): Boolean = {
-      if (nodes.isEmpty && tokens.nonEmpty && tokens.head.terminal == Terminal("$")) true
-      else nodes.head match {
-        case node: MNode =>
-          val body = parsingTable.getProd(node.nt)(tokens.head.terminal)    // needs error handling
-          if (body.isEmpty) {
-            println(node.nt, "\n", tokens.head.terminal)
-            println(startingSymbol)
-          }
-          val prod = body.get
-          val newNodes = prod.map {
-            case term: Terminal => MLeaf(Token(term))
-            case nonTerm: NonTerminal => MNode(nonTerm, ListBuffer())
-          }
-          newNodes.foreach(node.children += _)
-          helper(newNodes ::: nodes.tail, tokens)
-        case leaf: MLeaf =>
-          if (leaf.token.terminal.str.isEmpty) helper(nodes.tail, tokens)   // drop epsilon
-          else {
-            assert(leaf.token.terminal == tokens.head.terminal, leaf.token.terminal + ", " + tokens.head.terminal)   // needs error handling
-            leaf.token = tokens.head
-            helper(nodes.tail, tokens.tail)
-          }
-      }
-    }
-    assert(helper(List(startingSymbol), tokens))
-    def immutify(node: Node): Node = node match {
-      case mNode: MNode => InnerNode(mNode.nt, mNode.children.map(immutify).toList)
-      case mLeaf: MLeaf => Leaf(mLeaf.token)
+    def throwRTException(description: String, exceptedNT: Symbol, actualT: Terminal): Nothing = {
+      throw new RuntimeException(description + "\nexpected: " +
+        (first(parsingTable.productions, exceptedNT) - Terminal("")).map(_.str).mkString(" | ") +
+        "\nactual: " +  tr(actualT.str)
+      )
     }
 
-    Try(immutify(startingSymbol))
+    def helper(symbol: Symbol, rest: List[Token]): (Node, List[Token]) = symbol match {
+      case terminal: Terminal =>
+        if (terminal == Terminal("")) (Leaf(Token(terminal)), rest)
+        else if (terminal == rest.head.terminal) (Leaf(rest.head), rest.tail)
+        else throwRTException("unmatched token", terminal, rest.head.terminal)
+
+      case nonTerminal: NonTerminal =>
+        val optionalBody = parsingTable.getProd(nonTerminal)(rest.head.terminal)
+        if (optionalBody.isEmpty) throwRTException("empty table", nonTerminal, rest.head.terminal)
+        val body = optionalBody.get
+
+        val (children, restTkn) =
+          body.foldLeft((List[Node](), rest)) { case ((nodeList, tokenList), subSymbol) =>
+            val tmpResult = helper(subSymbol, tokenList)
+            (tmpResult._1 :: nodeList, tmpResult._2)
+          }
+        (InnerNode(nonTerminal, children.reverse), restTkn)
+    }
+    Try(helper(parsingTable.productions.head.head, tokens)._1)
   }
 
-}
-
-object TestParseTree extends App {
-  val source: String =
-    """
-      |{ Sample program
-      |  in TINY language -
-      |  computes factorial
-      |}
-      |read x; { input an integer }
-      |if ( x>0 ) { don't compute if x <= 0 }
-      |  fact := 1;
-      |  while x>0 do
-      |    fact := fact * x;
-      |    x := x - 1
-      |  endwhile;
-      |  write fact  { output factorial of x }
-    """.stripMargin
-//  """
-//    | v := u * u
-//  """.stripMargin
-  import Algorithm._
-  print(Productions.buildString(buildParseTree(
-    buildParsingTable(tiny.Productions.tinyProductions),
-    tiny.Scanner.split(source).get).get))
 }
